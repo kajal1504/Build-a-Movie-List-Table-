@@ -1,53 +1,64 @@
 import React, { useEffect, useState } from "react";
-import MovieTable from "./components/MovieTable";
 import Filters from "./components/Filters";
+import MovieTable from "./components/MovieTable";
 
-const App = () => {
+export default function App() {
   const [movies, setMovies] = useState([]);
   const [filteredMovies, setFilteredMovies] = useState([]);
   const [titleFilter, setTitleFilter] = useState("");
   const [selectedGenres, setSelectedGenres] = useState([]);
   const [allGenres, setAllGenres] = useState([]);
 
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 50;
+
+  // Fetch movies from URL
   useEffect(() => {
-    // Fetch movies JSON
     fetch("https://raw.githubusercontent.com/prust/wikipedia-movie-data/master/movies.json")
       .then((res) => res.json())
       .then((data) => {
         setMovies(data);
         setFilteredMovies(data);
-
-        // Extract all unique genres
         const genres = [...new Set(data.flatMap((movie) => movie.genres))].sort();
         setAllGenres(genres);
       });
   }, []);
-   
-  
 
   // Filter logic
   useEffect(() => {
     let filtered = movies;
 
-    // Filter by title
     if (titleFilter) {
       filtered = filtered.filter((movie) =>
         movie.title.toLowerCase().includes(titleFilter.toLowerCase())
       );
     }
 
-    // Filter by genre
     if (selectedGenres.length > 0) {
       filtered = filtered.filter((movie) =>
-        movie.genres.some((genre) => selectedGenres.includes(genre))
+        movie.genres.some((g) => selectedGenres.includes(g))
       );
     }
 
     setFilteredMovies(filtered);
+    setCurrentPage(1); // reset page on filter change
   }, [titleFilter, selectedGenres, movies]);
 
+  // Pagination calculations
+  const indexOfLast = currentPage * itemsPerPage;
+  const indexOfFirst = indexOfLast - itemsPerPage;
+  const currentMovies = filteredMovies.slice(indexOfFirst, indexOfLast);
+  const totalPages = Math.ceil(filteredMovies.length / itemsPerPage);
+
+  const goToPage = (page) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+    }
+  };
+
   return (
-    <div className="max-w-7xl mx-auto p-7">
+    <div className="max-w-6xl mx-auto p-6">
       <h1 className="text-2xl font-bold mb-6 text-center">🎬 Movie List</h1>
 
       <Filters
@@ -58,9 +69,26 @@ const App = () => {
         setSelectedGenres={setSelectedGenres}
       />
 
-      <MovieTable movies={filteredMovies} />
+      <MovieTable movies={currentMovies} />
+
+      {/* Pagination */}
+      <div className="flex justify-center mt-6 gap-2 flex-wrap">
+        {/* previous button */}
+        <button
+          onClick={() => goToPage(currentPage - 1)}
+          className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300 disabled:opacity-50"
+          disabled={currentPage === 1}>
+          Prev
+        </button>
+
+        {/* next button */}
+        <button
+          onClick={() => goToPage(currentPage + 1)}
+          className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300 disabled:opacity-50"
+          disabled={currentPage === totalPages}>
+         Next
+        </button>
+      </div>
     </div>
   );
-};
-
-export default App;
+}
