@@ -23,3 +23,4 @@ React.js, Tailwind CSS, Vite, JavaScript, fetch API
 https://raw.githubusercontent.com/prust/wikipedia-movie-data/master/movies.json
 
 run this project: npm run dev
+Live demo: https://build-a-movie-list-table-vsti.vercel.app/
